@@ -1,24 +1,32 @@
 
 class Vertex:
-    def __init__(self, node):
-        self.id = node
+    def __init__(self, uuid):
+        self._uuid = uuid
         self.adjacent = {}
-        self.payload = {}
+        self.user = None
 
     def __str__(self):
-        return "{} adjacent: ".format(self.id) + str([x.id for x in self.adjacent])
+        return "{} adjacent: ".format(self.uuid) + str([x.id for x in self.adjacent]) + self.user.__str__()
 
-    def add_neighbor(self, neighbor, weight=0):
-        self.adjacent[neighbor] = weight
+    @property
+    def uuid(self):
+        return self._uuid
 
-    def get_connections(self):
+    @property
+    def friends(self):
         return self.adjacent.keys()
 
-    def get_id(self):
-        return self.id
+    def add_friend(self, friend_uuid, weight=0):
+        if friend_uuid not in self.adjacent:
+            self.adjacent[friend_uuid] = weight
+            return True
+        return False
 
-    def get_weight(self, neighbor):
-        return self.adjacent[neighbor]
+    def get_uuid(self):
+        return self.uuid
+
+    def get_weight(self, friend_uuid):
+        return self.adjacent[friend_uuid]
 
 
 class Graph:
@@ -29,15 +37,15 @@ class Graph:
     def __iter__(self):
         return iter(self.vertex_dictionary.values())
 
-    def add_vertex(self, node):
+    def add_vertex(self, uuid):
         self.number_of_vertices += 1
-        new_vertex = Vertex(node)
-        self.vertex_dictionary[node] = new_vertex
+        new_vertex = Vertex(uuid)
+        self.vertex_dictionary[uuid] = new_vertex
         return new_vertex
 
-    def get_vertex(self, n):
-        if n in self.vertex_dictionary:
-            return self.vertex_dictionary[n]
+    def get_vertex(self, uuid):
+        if uuid in self.vertex_dictionary:
+            return self.vertex_dictionary[uuid]
         return None
 
     def add_edge(self, start, end, cost=0):

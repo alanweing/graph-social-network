@@ -62,6 +62,7 @@ class Keys:
     alert = 'alert'
     end = 'end'
 
+
 def _print(args, raw=False):
     """
     função responsável por 'embelezar' o texto, aceita apenas um vetor como
@@ -69,7 +70,7 @@ def _print(args, raw=False):
     texto não será impresso mas será retornado
     """
     import os
-    # rows e column tem o tamanho do terminal
+    # rows e columns possuem o tamanho do terminal
     rows, columns = os.popen('stty size', 'r').read().split()
     # line é o caractér a ser usado para preencher a linha quando alert for
     # True

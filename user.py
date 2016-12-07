@@ -45,3 +45,23 @@ class User:
             except (KeyError, AttributeError):
                 self._info["music"] = []
                 self._info["music"].append(music)
+
+    @property
+    def gender(self):
+        return self._info["gender"] if "gender" in self._info else None
+
+    @gender.setter
+    def gender(self, gender):
+        self._info["gender"] = gender
+
+    @property
+    def employed(self):
+        return self._info["employed"] if "employed" in self._info else None
+
+    @employed.setter
+    def employed(self, is_employed):
+        self._info["employed"] = is_employed
+
+    @property
+    def uuid(self):
+        return self._uuid

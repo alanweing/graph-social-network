@@ -1,4 +1,4 @@
-import _print
+from util import _print
 
 
 class Input:
@@ -112,7 +112,7 @@ class Input:
         return True if self.last_input in self._dict[self.ACCEPTABLE] \
             else False
 
-    def get(self, message, _type, acceptable, loop=False):
+    def get(self, message, _type, acceptable=None, loop=False):
         """
         função para montar o dicionário a ser enviado ao _input. Ter que montar
         esse mesmo dicionário toda vez que fosse necessário um input se torna
