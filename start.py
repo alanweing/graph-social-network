@@ -55,7 +55,7 @@ class Program:
                 user_object.gender = gender_
                 user_object.employed = True if employed_.lower() == "yes" else False
                 user_object.music = musics_.split(';')
-                new_vertex = self.users_graph.add_vertex(user_object.uuid)
+                new_vertex = self.users_graph.create_vertex(user_object.uuid)
                 new_vertex.user = user_object
                 print(new_vertex)
             else:
@@ -65,7 +65,16 @@ class Program:
         elif command[0] == "update":
             pass
         elif command[0] == "delete":
-            pass
+            if object_ == "user":
+                try:
+                    user_uuid_ = command[2]
+                except IndexError:
+                    danger("Please, specify an user")
+                    return
+
+            else:
+                danger("Unrecognized command '%s'" % ' '.join(x for x in command))
+
         elif command[0] == "info":
             pass
         elif command[0] == "exit":
@@ -90,12 +99,58 @@ def main():
 
 
     g = Graph()
+    g.create_vertex(0)
+    g.create_vertex(1)
+    g.create_vertex(2)
+    g.create_vertex(3)
+    g.create_vertex(4)
+    g.create_vertex(5)
+    g.create_vertex(6)
+    g.create_vertex(7)
+    g.create_vertex(8)
+    g.create_vertex(9)
+    g.create_vertex(10)
+
+    g.create_edge(0, 1, Vertex.FAMILY_CONNECTION)
+    g.create_edge(0, 2)
+    g.create_edge(0, 3)
+
+    g.create_edge(3, 4)
+
+    g.create_edge(4, 5)
+    g.create_edge(4, 6)
+    g.create_edge(4, 7)
+
+    g.create_edge(5, 6)
+
+    g.create_edge(6, 10)
+
+    g.create_edge(7, 8)
+    g.create_edge(7, 9)
+
+    g.create_edge(8, 9)
+
+    g.create_edge(9, 10)
+
+    print(g, '\n\n\n')
+
+    # g.is_circular_path(g.get_vertex(7), g.get_vertex(1))
+
+    # g.delete_edge(2, 0)
+    # g.delete_edge(2, 0)
+
+    # print(g)
+
+    # print(g, '\n\n\n')
+
+    # zero.add_connection(1)
+    # zero.add_connection(2)
     #
-    v = g.add_vertex(0)
-    v.add_friend(1)
-    v.add_friend(1)
-    print(v.friends)
-    print(v.__dict__)
+    # one.add_connection(0)
+
+    # text = ' '.join(str(key) for key in v.connections)
+    # print(text)
+    # print(v.__dict__)
     # g.add_vertex(2)
     # g.add_vertex(3)
     # g.add_vertex(4)
