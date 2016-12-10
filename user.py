@@ -1,15 +1,46 @@
 
+class UserGenerator:
+
+    users_list = [
+        {"name": "Ronald", "age": "47", "gender": "male", "employed": True, "musics":
+            ["Green Day - Still Breathing", "Twenty One Pilots - Cancer"]
+         },
+        {"name": "Alexander", "age": "43", "gender": "male", "employed": False, "musics":
+            ["Calvin Harris - My Way", "Alok - Hear me Now", "Make U Sweat - Nightlife is Magic"]
+         },
+        {"name": "Kylee", "age": "53", "gender": "female", "employed": True, "musics":
+            ["Alesso - Take My Breath Away"]
+         },
+        {"name": "Gary", "age": "74", "gender": "male", "employed": False, "musics":
+            ["Johann Sebastian", "Lise de la Salle", "Wolfgang Amade", "Robert Schumann"]
+         },
+        {"name": "Christina", "age": "61", "gender": "female", "employed": False, "musics":
+            ["Franz Schubert", "Sergei Prokofiev"]
+         },
+        {"name": "Joyce", "age": "72", "gender": "female", "employed": False, "musics":
+            ["The xx - VCR", "The xx - Islands", "Chet Faker - Release Your Problems", "Chet Faker - Talk is Cheap"]
+         }
+    ]
+
+    @staticmethod
+    def generate(number_of_users, uuids):
+        uuids = [uuid for uuid in uuids]
+        generated_users = []
+        for user in UserGenerator.users_list:
+            user_ = User(user["name"], uuids.pop(0))
+            user_.age = user["age"]
+            user_.employed = user["employed"]
+            user_.gender = user["gender"]
+            user_.music = user["musics"]
+            generated_users.append(user_)
+        return generated_users[0:number_of_users]
+
+
 class User:
     def __init__(self, name, uuid):
         self._name = name
         self._info = {}
         self._uuid = uuid
-
-    # def __setattr__(self, key, value):
-    #     if key == "age":
-    #         self.info["age"] = value
-    #     else:
-    #         setattr(self, key, value)
 
     def __str__(self):
         return 'name: {}\nuuid: {}\n'.format(self._name, self._uuid) + '\n'\

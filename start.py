@@ -1,5 +1,5 @@
 from graph import Vertex, Graph
-from user import User
+from user import User, UserGenerator
 from util._input import Input
 from util._print import _print, colorize, danger, Color, warning, info, success
 
@@ -10,14 +10,13 @@ from util._print import _print, colorize, danger, Color, warning, info, success
 class Program:
     """Classe responsável por emular um termial e executar as funções e métodos"""
     online = False
-    commands = ["create", "read", "update", "delete", "info", "exit"]
-    line = "$> "
+    commands = ["create", "read", "update", "delete", "info", "exit", "block", "clear"]
+    line = "  $> "
 
     def __init__(self):
-        self.users_graph = Graph()
+        self.graph = Graph()
         self.current_uuid = 0
-
-    def start(self):
+        self.generate_users(6)
         Program.online = True
         self.start_emulator()
 
@@ -25,8 +24,8 @@ class Program:
     def stop():
         Program.online = False
 
-    """Essa é a função reponsável por pegar o input do usuário"""
     def start_emulator(self):
+        """Essa é a função reponsável por pegar o input do usuário"""
         while Program.online:
             command = Input()
             command.get(message=Program.line, _type=Input.STRING)
@@ -37,12 +36,20 @@ class Program:
                 danger("Unrecognized command '%s'" % ' '.join(x for x in command))
 
     def command_handler(self, command):
-        try:
-            object_ = command[1]
-        except IndexError:
-            danger("Missing arguments!")
-            return
+        if command[0] not in ["exit", "clear"]:
+            try:
+                object_ = command[1]
+            except IndexError:
+                danger("Missing arguments!")
+                return
         _input = Input()
+
+        def get_connection_cost(type_):
+            return 1 if type_ == "known" else \
+                            2 if type_ == "friend" else \
+                            3 if type_ == "family" \
+                            else 0
+
         if command[0] == "create":
             if object_ == "user":
                 name_ = _input.get("Name:", Input.STRING)
@@ -55,9 +62,32 @@ class Program:
                 user_object.gender = gender_
                 user_object.employed = True if employed_.lower() == "yes" else False
                 user_object.music = musics_.split(';')
-                new_vertex = self.users_graph.create_vertex(user_object.uuid)
-                new_vertex.user = user_object
-                print(new_vertex)
+                new_user = self.create_user(user_object)
+                print(new_user)
+
+            elif object_ == "connection":
+                success_ = False
+                if len(command) == 5:
+                    success_ = self.create_connection(command[2], command[3], command[4])
+                elif len(command) == 4:
+                    success_ = self.create_connection(command[2], command[3],
+                                                      get_connection_cost(
+                                                          _input.get("Connection type:", Input.STRING,
+                                                                     ["known", "friend", "family"])))
+                elif len(command) == 3:
+                    success_ = self.create_connection(command[2], _input.get("Connect to:", Input.MIXED),
+                                                      get_connection_cost(
+                                                          _input.get("Connection type:", Input.STRING,
+                                                                     ["known", "friend", "family"])))
+                elif len(command) == 2:
+                    success_ = self.create_connection(_input.get("User:", Input.MIXED),
+                                                      _input.get("Connect to:", Input.MIXED),
+                                                      get_connection_cost(
+                                                          _input.get("Connection type:", Input.STRING,
+                                                                     ["known", "friend", "family"])))
+                if success_:
+                    success("Successful connection!")
+                return
             else:
                 danger("Unrecognized command '%s'" % ' '.join(x for x in command))
         elif command[0] == "read":
@@ -67,108 +97,123 @@ class Program:
         elif command[0] == "delete":
             if object_ == "user":
                 try:
-                    user_uuid_ = command[2]
+                    vertex_ = self.get_vertex_by_input(command[2])
+                    if vertex_ is not None and vertex_ is not False:
+                        self.graph.delete_vertex(vertex_.uuid)
+                        success("User '%s' (uuid: %d) deleted!" % (vertex_.user.name, vertex_.uuid))
                 except IndexError:
-                    danger("Please, specify an user")
+                    danger("Please, specify an user to delete")
                     return
 
             else:
                 danger("Unrecognized command '%s'" % ' '.join(x for x in command))
 
         elif command[0] == "info":
-            pass
+            try:
+                if command[1] == "uuid":
+                    print("current uuid:", self.current_uuid)
+                elif command[1] == "users":
+                    print(self.graph)
+                elif command[1] == "cycles":
+                    print(self.graph.find_cycles())
+                elif command[1] == "path":
+                    print(self.graph.find_shortest_path(int(command[2]), int(command[3])))
+                elif command[1] == "paths":
+                    print([path_ for path_ in self.graph.find_paths(int(command[2]), int(command[3]))])
+                elif command[1] == "suggest":
+                    print([suggestion.uuid for suggestion in self.graph.suggest_connection(int(command[2]))])
+                elif command[1] == "connections":
+                    try:
+                        vertex_ = self.get_vertex_by_input(command[2])
+                        if vertex_ is not None and vertex_ is not False:
+                            for connection in vertex_.weighted_connections:
+                                print(connection)
+                    except IndexError:
+                        for vertex_ in self.graph.vertex_dictionary.values():
+                            for connection in vertex_.weighted_connections:
+                                print(connection)
+                elif command[1] == "graph":
+                    print(self.graph)
+            except IndexError:
+                danger("Missing arguments!")
+                return
+            except ValueError:
+                danger("Please, enter a valid uuid")
+                return
+        elif command[0] == "block":
+            try:
+                start = self.get_vertex_by_input(command[1])
+                end = self.get_vertex_by_input(command[2])
+                if start is not None and start is not False and end is not None and end is not False:
+                    self.graph.delete_edge(start.uuid, end.uuid)
+                    success("User %s (uuid: %d) is now blocked!" % (end.user.name, end.uuid))
+            except IndexError:
+                danger("Missing arguments!")
+                return
         elif command[0] == "exit":
-            pass
+            info("Bye")
+            exit(0)
+        elif command[0] == "clear":
+            print(chr(27) + "[2J")
+            return
 
     def get_uuid(self):
         uuid = self.current_uuid
         self.current_uuid += 1
         return uuid
 
+    def create_user(self, user):
+        new_vertex = self.graph.create_vertex(user.uuid)
+        new_vertex.user = user
+        return new_vertex
 
+    def generate_users(self, number_of_users):
+        info("generating %d users" % number_of_users)
+        users_ = UserGenerator.generate(number_of_users, (self.get_uuid() for _ in range(number_of_users)))
+        for user_ in users_:
+            vertex = self.create_user(user_)
+        if number_of_users == 6:
+            self.create_connection(0, 1, Vertex.FRIEND_CONNECTION)
+            self.create_connection(0, 2, Vertex.FRIEND_CONNECTION)
+            self.create_connection(1, 2, Vertex.FRIEND_CONNECTION)
+            self.create_connection(2, 3, Vertex.FAMILY_CONNECTION)
+            self.create_connection(3, 4, Vertex.KNOWN_CONNECTION)
+            self.create_connection(3, 5, Vertex.FAMILY_CONNECTION)
+            self.create_connection(4, 5, Vertex.FAMILY_CONNECTION)
 
-def main():
-    # p = Program()
-    # p.start()
-    # test_user = User("Alan", 1)
-    # test_user.age = 22
-    # test_user.music = "aloha"
-    # test_user.music = "asd"
-    # test_user.music = 21
-    # print(test_user)
+    def create_connection(self, start, end, connection_type):
+        start = self.get_vertex_by_input(start)
+        end = self.get_vertex_by_input(end)
+        if start is None or end is None:
+            return False
+        self.graph.create_edge(start.uuid, end.uuid, connection_type)
+        return True
 
+    def find_vertex(self, *names):
+        for name in names:
+            print(name)
+            vertex_ = self.get_vertex_by_input(name)
+            if vertex_ is None:
+                danger("User '%s' not found!" % name)
+            yield vertex_
 
-    g = Graph()
-    g.create_vertex(0)
-    g.create_vertex(1)
-    g.create_vertex(2)
-    g.create_vertex(3)
-    g.create_vertex(4)
-    g.create_vertex(5)
-    g.create_vertex(6)
-    g.create_vertex(7)
-    g.create_vertex(8)
-    g.create_vertex(9)
-    g.create_vertex(10)
-
-    g.create_edge(0, 1, Vertex.FAMILY_CONNECTION)
-    g.create_edge(0, 2)
-    g.create_edge(0, 3)
-
-    g.create_edge(3, 4)
-
-    g.create_edge(4, 5)
-    g.create_edge(4, 6)
-    g.create_edge(4, 7)
-
-    g.create_edge(5, 6)
-
-    g.create_edge(6, 10)
-
-    g.create_edge(7, 8)
-    g.create_edge(7, 9)
-
-    g.create_edge(8, 9)
-
-    g.create_edge(9, 10)
-
-    print(g, '\n\n\n')
-
-    # g.is_circular_path(g.get_vertex(7), g.get_vertex(1))
-
-    # g.delete_edge(2, 0)
-    # g.delete_edge(2, 0)
-
-    # print(g)
-
-    # print(g, '\n\n\n')
-
-    # zero.add_connection(1)
-    # zero.add_connection(2)
-    #
-    # one.add_connection(0)
-
-    # text = ' '.join(str(key) for key in v.connections)
-    # print(text)
-    # print(v.__dict__)
-    # g.add_vertex(2)
-    # g.add_vertex(3)
-    # g.add_vertex(4)
-    #
-    # g.add_edge(0, 1)
-    # g.add_edge(0, 2)
-    # g.add_edge(1, 2)
-    # g.add_edge(2, 3)
-    # g.add_edge(2, 4)
-    #
-    # for v in g:
-    #     for w in v.get_connections():
-    #         vid = v.get_id()
-    #         wid = w.get_id()
-    #         print('( %s , %s, %3d)' % (vid, wid, v.get_weight(w)))
-    #
-    # for v in g:
-    #     print('g.vert_dict[%s]=%s' % (v.get_id(), g.vertex_dictionary[v.get_id()]))
+    def get_vertex_by_input(self, input_):
+        try:
+            input_ = int(input_)
+        except ValueError:
+            pass
+        vertex_ = False
+        type_ = ''
+        if isinstance(input_, int):
+            vertex_ = self.graph.get_vertex(input_)
+            type_ = "uuid"
+        elif isinstance(input_, str):
+            vertex_ = self.graph.find_vertex_by_user_name(input_)
+            type_ = "user"
+        if vertex_ is None:
+            danger("Cannot find %s '%s'!" % (type_, str(input_)))
+            return None
+        return vertex_
 
 if __name__ == "__main__":
-    main()
+    Program()
