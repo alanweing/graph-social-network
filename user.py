@@ -1,6 +1,8 @@
 
 class UserGenerator:
-
+    """
+    Classe responsável por gerar usuários com uuids únicos
+    """
     users_list = [
         {"name": "Ronald", "age": "47", "gender": "male", "employed": True, "musics":
             ["Green Day - Still Breathing", "Twenty One Pilots - Cancer"]
@@ -24,6 +26,13 @@ class UserGenerator:
 
     @staticmethod
     def generate(number_of_users, uuids):
+        """
+        :param number_of_users: número de usuários a serem gerados
+        :param uuids: lista de ids disponíveis para os usuários a serem gerados
+        :type uuids: list
+        :return: lista de usuários gerados
+        :rtype: list
+        """
         uuids = [uuid for uuid in uuids]
         generated_users = []
         for user in UserGenerator.users_list:
@@ -37,6 +46,9 @@ class UserGenerator:
 
 
 class User:
+    """
+    Classe para armazenar as informações de cada usuário
+    """
     def __init__(self, name, uuid):
         self._name = name
         self._info = {}

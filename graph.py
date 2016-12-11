@@ -2,7 +2,9 @@ from sys import getrecursionlimit, setrecursionlimit
 
 
 class Vertex:
-
+    """
+    Classe equivalente ao vértice de um grafo
+    """
     UNKNOWN = 0
     KNOWN_CONNECTION = 1
     FRIEND_CONNECTION = 2
@@ -36,14 +38,19 @@ class Vertex:
 
     @staticmethod
     def get_connection_type(key):
+        """
+        :param key: peso da conexão
+        :return: Nome da conexão
+        :rtype: str
+        """
         return ("Family" if key == 3 else "Friend" if key == 2 else "Known" if key == 1 else "Unknown connection type")\
                + " connection"
 
     def create_connection(self, vertex, weight=0):
         """
-        :param vertex: vertex to connect
-        :param weight: weight of the connection
-        :return: True if the connection is successful, False if it already exists
+        :param vertex: Vértice a ser conectado
+        :param weight: Peso da conexão
+        :return: True se a conexão for sucedida, False se não
         :rtype: bool
         """
         if vertex not in self.adjacent:
@@ -53,9 +60,7 @@ class Vertex:
 
     def update_connection_weight(self, vertex, new_weight):
         """
-        :param vertex:
-        :param new_weight:
-        :return:
+        !NOT IMPLEMENTED/NOT USED!
         """
         if vertex in self.adjacent:
             self.adjacent[vertex] = new_weight
@@ -63,9 +68,18 @@ class Vertex:
         return False
 
     def delete_connection(self, connection):
+        """
+        :param connection: aresta de uma conexão a ser deletada
+        :return: conexão recém deletada
+        """
         return self.adjacent.pop(connection, None)
 
     def get_weight(self, vertex):
+        """
+        :param vertex: Vértice para pegar o peso da conexão
+        :return: Peso da conexão
+        :rtype: int
+        """
         return self.adjacent[vertex]
 
 
@@ -89,6 +103,11 @@ class Graph:
         return [vertex_ for vertex_ in self.vertex_dictionary]
 
     def create_vertex(self, uuid):
+        """
+        :param uuid: Identificador único para o vértice
+        :return: Novo vértice, sem conexões
+        :rtype: Vertex
+        """
         self.number_of_vertices += 1
         new_vertex = Vertex(uuid)
         self.vertex_dictionary[uuid] = new_vertex
@@ -105,6 +124,10 @@ class Graph:
         return None
 
     def delete_vertex(self, uuid):
+        """
+        :param uuid: identificador do vértice a ser deletado
+        :return: vértice recém deletado
+        """
         if uuid in self.vertex_dictionary:
             delete_ = self.vertex_dictionary[uuid]
             for vertex_ in delete_.connections:
@@ -117,6 +140,12 @@ class Graph:
         return None
 
     def create_edge(self, start, end, cost=0):
+        """
+        Cria uma conexão entre start e end com peso cost
+        :param start: vértice inicial
+        :param end: vértice final
+        :param cost: peso da conexã0
+        """
         if start not in self.vertex_dictionary:
             self.create_vertex(start)
         if end not in self.vertex_dictionary:
@@ -125,6 +154,11 @@ class Graph:
         self.get_vertex(end).create_connection(self.get_vertex(start), cost)
 
     def delete_edge(self, start, end):
+        """
+        deleta uma conxão entre start e end
+        :param start: vértice inicial
+        :param end: vértice final
+        """
         self.get_vertex(start).delete_connection(self.get_vertex(end))
         self.get_vertex(end).delete_connection(self.get_vertex(start))
 
@@ -171,11 +205,17 @@ class Graph:
             return None
 
     def suggest_connection(self, ancestor):
+        """
+        :param ancestor: vértice para sugerir conexões
+        :return: lista de vértices que podem ser adicionados ao ancestor (possuem alguma forma de ligacão entre
+        outras conexões)
+        """
         ancestor = self.vertex_dictionary[ancestor]
         suggestion_list = []
         for connection in ancestor.connections:
-            if connection.get_weight(ancestor) == 0:
-                suggestion_list.append(connection)
+            for sub_connection in connection.connections:
+                if sub_connection.uuid not in ancestor.connections_list and sub_connection != ancestor:
+                    suggestion_list.append(sub_connection)
         return suggestion_list
 
     def find_cycle(self):
@@ -271,6 +311,10 @@ class Graph:
         return cycles
 
     def find_vertex_by_user_name(self, name):
+        """
+        :param name: nome do usuário
+        :return: vértice se existir um vértice com um usuário de nome 'name' None se não encontrar
+        """
         for uuid in self.vertex_dictionary:
             if self.vertex_dictionary[uuid].user.name.lower() == str(name):
                 return self.vertex_dictionary[uuid]
